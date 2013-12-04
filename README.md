@@ -1,8 +1,9 @@
-# Rubeen
+# Alumixitter
 
 ## What is this?
 This is one of the high spec Twitter client written in Ruby.  
-はい、Twitterクライアントです 
+はい、Twitterクライアントです  
+一瞬だけRubeenという名前でしたが、Alumixitterに変更しました  
 Ruby製です  
 未完成です  
 UserStreamでタイムラインを見ることと登校することしかできないです  
