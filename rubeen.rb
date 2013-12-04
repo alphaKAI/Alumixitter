@@ -1,6 +1,6 @@
 #encoding:utf-8
 # Copyleft (C) alphaKAI 2013 http://alpha-kai-net.info
-
+#
 require "gtk3"
 require "./twitruby"
 
@@ -31,14 +31,26 @@ class Rubeen
 		@account_combo.append_text(@account_id)
 		@account_combo.show
 
+		@main_window.add_events(Gdk::Event::Type::KEY_PRESS)
 		@main_window.signal_connect("destroy"){
 			Gtk.main_quit
 		}
+		@main_window.signal_connect("key-press-event"){|w, e|
+			if Gdk::Keyval.to_name(e.keyval) == "Tab"
+				@main_window.set_focus(@button)
+			end
+		}
 
 		@button.signal_connect("clicked"){
-			@twi.update(@textview.buffer.text)
+			self.post(@textview.buffer.text)
 			@textview.buffer.delete
 		}
+
+		@main_tab_tweet = {}
+	end
+
+	def post(str)
+		@twi.update(str)
 	end
 
 	def main
@@ -51,9 +63,10 @@ class Rubeen
 		@main_window.show_all
 
 		Thread.new{
+			$i = 1
 			loop{
 				@twi.user_stream{|str|
-					hbox = Gtk::HBox.new
+					hbox = Gtk::HBox.new(false, 10)
 					tweet = str["text"]
 
 					# 100文字ぐらいで折り返し
@@ -68,26 +81,33 @@ class Rubeen
 					begin
 						Thread.new{
 							post_id = str["user"]["screen_name"]
-
+							p $i
 							#p post_id
 							str_ = "#{post_id}:#{tweet}"
 							#str_ = tweet
 							tweet_label = Gtk::Label.new(str_)
-							tweet_label.set_justify(Gtk::JUSTIFY_LEFT)
 
-							hbox.pack_start(tweet_label)
+							hbox.set_border_width(10)
+							hbox.pack_start(tweet_label, nil, nil, 10)
+
+							@main_tab_tweet.store(1,{
+								:tweet => tweet,
+								:rt => tweet =~ /^RT/ ? true : false,
+								:post_by => post_id
+							})
 						}
 					end
 
 					Thread.new{
 						if tweet.include?(@account_id)
-							@vbox_reply.add(hbox)
+							@vbox_reply.pack_end(hbox)
 						else
-							@vbox_main.add(hbox)
+							@vbox_main.pack_end(hbox)
 						end
 					}
 
 					@main_window.show_all
+					$i += 1
 				}
 			}
 		}
